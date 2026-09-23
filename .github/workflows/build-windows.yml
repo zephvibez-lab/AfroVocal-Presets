@@ -1,0 +1,43 @@
+name: Build Windows VST3
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  windows-vst3:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure x64 Release
+        run: cmake --preset windows-release
+
+      - name: Build VST3 and Standalone
+        run: cmake --build --preset windows-release
+
+      - name: Stage bundle
+        shell: pwsh
+        run: |
+          $src = "Build-Windows/AfroVocalPresets_artefacts/Release/VST3/AfroVocal Presets.vst3"
+          $stage = "release/AfroVocal Presets.vst3"
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item -Recurse -Force $src $stage
+          if (-not (Test-Path "$stage/Contents/x86_64-win/AfroVocal Presets.vst3")) { throw "Expected x86_64 VST3 binary was not staged" }
+          Compress-Archive -Path $stage -DestinationPath "release/AfroVocal-Presets-Windows-x64.zip" -Force
+
+      - name: Upload Windows VST3 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: AfroVocal-Presets-Windows-x64
+          path: release/AfroVocal-Presets-Windows-x64.zip
+          if-no-files-found: error
+
+      - name: Upload standalone executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: AfroVocal-Presets-Windows-Standalone
+          path: Build-Windows/AfroVocalPresets_artefacts/Release/Standalone/**
+          if-no-files-found: warn
