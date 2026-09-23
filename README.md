@@ -12,6 +12,12 @@ The audio callback uses cached APVTS parameter pointers, preallocated scratch/ri
 
 The current development build adds **AfroFocus**, an adaptive vocal-lock macro that increases pitch correction authority only when the tracker has enough confidence. It is designed to preserve expressive transitions while tightening unstable notes. Retune Speed now controls the correction smoothing time, and the channel-strip EQ/air filters are actively applied in the audio path. The engine remains allocation-free in the callback, uses cached parameters and preallocated buffers, and reports zero host latency for the current causal design.
 
+## Bold mixer UI and preset generation
+
+The current interface uses a larger 1,540 × 900 default canvas, bold section hierarchy, enlarged value fields, two-row mixer modules, clear key/scale access, and a browser that exposes **1,034 total presets**: ten curated factory presets plus 1,024 deterministic AfroVocal variations across Afrobeat, Amapiano, Afro-R&B, emotional, harmony, Highlife, Dancehall, and Alté styles.
+
+The **GENERATE AI** control always works offline: every click creates and loads a different new preset with coordinated tuning, key/scale, EQ, compression, de-essing, warmth, ambience, delay, and output values. When the user also supplies a prompt and API key, the same action starts the optional online AI variation worker; the offline preset remains available if internet access is unavailable.
+
 ## Reference-driven editor
 
 The editor has been redesigned around the uploaded reference image’s information architecture without copying proprietary artwork or branding. It uses a dense light-metal channel-strip body, colored functional controls, active-state LEDs, a high-contrast central peak/gain-reduction meter, a dark preset browser, compact utility header, and an AI assistance footer. The logical target is approximately 1,320 × 760 with a resizable minimum of 1,080 × 620, following the research recommendation for larger knobs and readable labels rather than reproducing the photo’s cramped geometry.

@@ -34,6 +34,8 @@ public:
     juce::AudioProcessorValueTreeState parameters;
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     void applyFactoryPreset(const juce::String& presetName);
+    int generateNextPreset();
+    int getGeneratedPresetCount() const { return 1024; }
     juce::String getLastPreset() const;
 
     void requestAiPreset(const juce::String& prompt, const juce::String& apiKey);
@@ -84,11 +86,13 @@ private:
     bool pendingAiReady = false;
     std::atomic<float> meterPeak { 0.0f };
     std::atomic<float> gainReduction { 0.0f };
+    int generatedPresetIndex = 0;
 
     void cacheParameterPointers();
     void setAiStatus(const juce::String& status);
     void queueAiPreset(const juce::var& json);
     void applyAiJson(const juce::var& json);
+    void applyGeneratedPreset(int index);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AfroVocalPresetsAudioProcessor)
 };

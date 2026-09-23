@@ -12,7 +12,8 @@ AfroVocalPresetsAudioProcessorEditor::AfroVocalPresetsAudioProcessorEditor(AfroV
     setSize(1540, 900); setResizable(true, true); setResizeLimits(1240, 760, 2200, 1300);
     titleLabel.setText("AFROVOCAL PRESETS", juce::dontSendNotification); titleLabel.setFont(juce::Font(22.0f, juce::Font::bold)); titleLabel.setColour(juce::Label::textColourId, white); addAndMakeVisible(titleLabel);
     for (int i = 0; i < factoryPresets.size(); ++i) presetBox.addItem(factoryPresets[i], i + 1);
-    presetBox.setSelectedId(1); presetBox.onChange = [this] { processor.applyFactoryPreset(presetBox.getText()); }; addAndMakeVisible(presetBox);
+    for (int i = 0; i < processor.getGeneratedPresetCount(); ++i) presetBox.addItem("AI Vocal Preset " + juce::String::formatted("%04d", i + 1), factoryPresets.size() + i + 1);
+    presetBox.setEditableText(true); presetBox.setSelectedId(1); presetBox.onChange = [this] { const int id = presetBox.getSelectedId(); if (id >= 1 && id <= factoryPresets.size()) processor.applyFactoryPreset(presetBox.getText()); else if (id > factoryPresets.size()) processor.generateNextPreset(); }; addAndMakeVisible(presetBox);
     savePresetButton.onClick = [this] { aiStatus.setText("Preset state is stored with the DAW project.", juce::dontSendNotification); }; addAndMakeVisible(savePresetButton);
     bypassButton.setClickingTogglesState(true); addAndMakeVisible(bypassButton);
 
@@ -28,8 +29,8 @@ AfroVocalPresetsAudioProcessorEditor::AfroVocalPresetsAudioProcessorEditor(AfroV
     keyBox.addItemList({ "Chromatic", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }, 1); scaleBox.addItemList({ "Major", "Minor", "Dorian", "Pentatonic" }, 1); addAndMakeVisible(keyBox); addAndMakeVisible(scaleBox); keyA = std::make_unique<ComboAttachment>(processor.parameters, "key", keyBox); scaleA = std::make_unique<ComboAttachment>(processor.parameters, "scale", scaleBox);
     aiPrompt.setTextToShowWhenEmpty("Example: intimate Amapiano lead, soft plate, fast tune…", juce::Colour(0xff7b8587)); aiPrompt.setMultiLine(false); addAndMakeVisible(aiPrompt);
     apiKeyEditor.setTextToShowWhenEmpty("Optional API key for online assistance", juce::Colour(0xff7b8587)); apiKeyEditor.setPasswordCharacter('*'); addAndMakeVisible(apiKeyEditor);
-    activateAiButton.onClick = [this] { processor.requestAiPreset(aiPrompt.getText(), apiKeyEditor.getText()); }; addAndMakeVisible(activateAiButton);
-    aiStatus.setText(processor.getAiStatus(), juce::dontSendNotification); aiStatus.setColour(juce::Label::textColourId, juce::Colour(0xff9ba8aa)); aiStatus.setFont(juce::Font(11.0f)); addAndMakeVisible(aiStatus);
+    activateAiButton.setButtonText("GENERATE AI"); activateAiButton.onClick = [this] { const int generated = processor.generateNextPreset(); presetBox.setSelectedId(factoryPresets.size() + generated + 1); aiStatus.setText("Generated a fresh offline vocal preset. Add a prompt + API key for online AI variation.", juce::dontSendNotification); if (aiPrompt.getText().trim().isNotEmpty() && apiKeyEditor.getText().trim().isNotEmpty()) processor.requestAiPreset(aiPrompt.getText(), apiKeyEditor.getText()); }; addAndMakeVisible(activateAiButton);
+    aiStatus.setText(processor.getAiStatus(), juce::dontSendNotification); aiStatus.setColour(juce::Label::textColourId, juce::Colour(0xff1d2529)); aiStatus.setFont(juce::Font(12.0f, juce::Font::bold)); addAndMakeVisible(aiStatus);
     startTimerHz(12);
 }
 
@@ -37,7 +38,7 @@ AfroVocalPresetsAudioProcessorEditor::~AfroVocalPresetsAudioProcessorEditor() = 
 
 void AfroVocalPresetsAudioProcessorEditor::configureSlider(juce::Slider& s, const juce::String& suffix)
 {
-    s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag); s.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 62, 18); s.setTextValueSuffix(suffix);
+    s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag); s.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 82, 25); s.setTextValueSuffix(suffix);
     s.setColour(juce::Slider::rotarySliderFillColourId, teal); s.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff7f8883)); s.setColour(juce::Slider::thumbColourId, white); s.setColour(juce::Slider::textBoxTextColourId, ink); s.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xffe0e0d9)); s.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack); s.setNumDecimalPlacesToDisplay(1);
 }
 
@@ -80,7 +81,7 @@ void AfroVocalPresetsAudioProcessorEditor::paint(juce::Graphics& g)
     auto lane = [&](const juce::String& name, juce::Colour c, int width) { auto a = juce::Rectangle<int>(x, body.getY(), width, body.getHeight()); drawModule(g, a, name, c); x += width + gap; return a; };
     const auto inputArea = lane("INPUT / GATE", blue, laneWidth); const auto dynArea = lane("COMPRESSOR", red, laneWidth); const auto toneArea = lane("TONE / THD", cyan, laneWidth); const auto fxArea = lane("FX / SPACE", amber, laneWidth);
     auto meterArea = juce::Rectangle<int>(x, body.getY(), meterWidth, body.getHeight()); drawModule(g, meterArea, "VOICE METER", cyan); drawMeter(g, meterArea.reduced(17, 42).toFloat()); x += meterWidth + gap;
-    auto browserArea = juce::Rectangle<int>(x, body.getY(), right + browserWidth - x, body.getHeight()); g.setColour(juce::Colour(0xff101417)); g.fillRoundedRectangle(browserArea.toFloat(), 5.0f); g.setColour(juce::Colour(0xff495355)); g.drawRoundedRectangle(browserArea.toFloat(), 5.0f, 1.0f); g.setColour(white); g.setFont(juce::Font(12.0f, juce::Font::bold)); g.drawText("PRESETS", browserArea.getX() + 13, browserArea.getY() + 14, browserArea.getWidth() - 26, 17, juce::Justification::left); g.setColour(juce::Colour(0xff798589)); g.setFont(juce::Font(10.0f)); g.drawText("AFROBEAT VOCALS", browserArea.getX() + 13, browserArea.getY() + 36, browserArea.getWidth() - 26, 15, juce::Justification::left);
+    auto browserArea = juce::Rectangle<int>(x, body.getY(), right + browserWidth - x, body.getHeight()); g.setColour(juce::Colour(0xff101417)); g.fillRoundedRectangle(browserArea.toFloat(), 5.0f); g.setColour(juce::Colour(0xff495355)); g.drawRoundedRectangle(browserArea.toFloat(), 5.0f, 1.0f); g.setColour(white); g.setFont(juce::Font(15.0f, juce::Font::bold)); g.drawText("PRESETS · 1,034", browserArea.getX() + 16, browserArea.getY() + 17, browserArea.getWidth() - 30, 22, juce::Justification::left); g.setColour(juce::Colour(0xff9aa9aa)); g.setFont(juce::Font(11.0f, juce::Font::bold)); g.drawText("FACTORY + AI GENERATED", browserArea.getX() + 16, browserArea.getY() + 45, browserArea.getWidth() - 30, 16, juce::Justification::left);
     g.setColour(juce::Colour(0xff252d31)); g.fillRect(browserArea.getX() + 10, browserArea.getY() + 61, browserArea.getWidth() - 20, 1);
     for (int i = 0; i < factoryPresets.size(); ++i) { const int yy = browserArea.getY() + 73 + i * 27; if (presetBox.getSelectedId() == i + 1) { g.setColour(juce::Colour(0xff294d52)); g.fillRoundedRectangle(browserArea.getX() + 7.0f, static_cast<float>(yy - 4), browserArea.getWidth() - 14.0f, 22.0f, 3.0f); } g.setColour(i == presetBox.getSelectedId() - 1 ? cyan : juce::Colour(0xffb8c0c0)); g.setFont(juce::Font(10.0f, i == presetBox.getSelectedId() - 1 ? juce::Font::bold : juce::Font::plain)); g.drawText(factoryPresets[i], browserArea.getX() + 15, yy, browserArea.getWidth() - 26, 14, juce::Justification::left); }
 

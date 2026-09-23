@@ -478,3 +478,48 @@ void AfroVocalPresetsAudioProcessor::applyAiJson(const juce::var& json)
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new AfroVocalPresetsAudioProcessor(); }
+
+int AfroVocalPresetsAudioProcessor::generateNextPreset()
+{
+    const int index = generatedPresetIndex++ % 1024;
+    applyGeneratedPreset(index);
+    return index;
+}
+
+void AfroVocalPresetsAudioProcessor::applyGeneratedPreset(int index)
+{
+    static const juce::StringArray genres { "Afrobeat", "Amapiano", "Afro-R&B", "Emotional", "Harmony", "Highlife", "Dancehall", "Alté" };
+    static const juce::StringArray moods { "Clear", "Warm", "Gloss", "Intimate", "Wide", "Hard Tune", "Pocket", "Airy", "Dark", "Lifted", "Radio", "Night" };
+    static const juce::StringArray textures { "Lead", "Stack", "Chorus", "Bounce", "Velvet", "Club", "Ambient", "Dry" };
+    const int safeIndex = juce::jlimit(0, 1023, index);
+    const int genre = safeIndex % genres.size();
+    const int mood = (safeIndex / genres.size()) % moods.size();
+    const int texture = (safeIndex / (genres.size() * moods.size())) % textures.size();
+    const auto name = "AI / " + genres[genre] + " / " + moods[mood] + " " + textures[texture] + " #" + juce::String(safeIndex + 1);
+    static const juce::StringArray factoryNames { "Afrobeat Lead - Clear Bounce", "Afrobeat Lead - Warm Pocket", "Amapiano Lead - Gloss", "Amapiano Lead - Soft Air", "Emotional Ballad - Intimate", "Emotional Ballad - Wide", "Background Harmony - Tucked", "Background Harmony - Airy Stack", "Hard-Tuned Lead - Modern", "Hard-Tuned Lead - Dry" };
+    applyFactoryPreset(factoryNames[genre % factoryNames.size()]);
+    auto set = [this](const char* id, float value) { if (auto* p = parameters.getParameter(id)) p->setValueNotifyingHost(p->convertTo0to1(value)); };
+    const float phase = static_cast<float>(safeIndex % 32) / 31.0f;
+    const float style = static_cast<float>(mood) / 11.0f;
+    set("tuneAmount", mood == 5 ? 0.94f : juce::jlimit(0.12f, 0.88f, 0.22f + phase * 0.46f + (texture == 3 ? 0.12f : 0.0f)));
+    set("vocalFocus", juce::jlimit(0.18f, 1.0f, 0.38f + style * 0.38f));
+    set("retuneSpeed", mood == 5 ? 6.0f : 18.0f + phase * 70.0f);
+    set("highPass", 60.0f + static_cast<float>((safeIndex * 7) % 90));
+    set("lowMidCut", -1.0f - phase * 3.8f);
+    set("presence", 0.5f + style * 3.8f);
+    set("air", juce::jlimit(0.10f, 0.82f, 0.22f + (texture == 7 ? 0.42f : phase * 0.28f)));
+    set("compThreshold", -13.0f - style * 11.0f);
+    set("compRatio", 2.0f + style * 4.5f);
+    set("deEss", 0.22f + phase * 0.42f);
+    set("warmth", juce::jlimit(0.08f, 0.78f, texture == 4 ? 0.58f : 0.14f + phase * 0.32f));
+    set("parallelComp", 0.05f + style * 0.27f);
+    set("plate", texture == 5 ? 0.12f : 0.16f + phase * 0.28f);
+    set("ambient", (texture == 6 || mood == 4) ? 0.52f : 0.08f + phase * 0.22f);
+    set("delayMix", mood == 8 ? 0.04f : 0.06f + phase * 0.19f);
+    set("delayMs", 85.0f + static_cast<float>((safeIndex * 37) % 410));
+    set("outputGain", -1.8f + phase * 1.0f);
+    set("key", static_cast<float>(safeIndex % 13));
+    set("scale", static_cast<float>((safeIndex / 13) % 4));
+    const juce::ScopedLock lock(metadataLock); lastPreset = name;
+}
+
