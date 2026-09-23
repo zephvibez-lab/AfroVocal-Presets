@@ -9,8 +9,8 @@ namespace
 AfroVocalPresetsAudioProcessorEditor::AfroVocalPresetsAudioProcessorEditor(AfroVocalPresetsAudioProcessor& p)
     : AudioProcessorEditor(&p), processor(p)
 {
-    setSize(1320, 760); setResizable(true, true); setResizeLimits(1080, 620, 1900, 1100);
-    titleLabel.setText("AFROVOCAL PRESETS", juce::dontSendNotification); titleLabel.setFont(juce::Font(18.0f, juce::Font::bold)); titleLabel.setColour(juce::Label::textColourId, white); addAndMakeVisible(titleLabel);
+    setSize(1540, 900); setResizable(true, true); setResizeLimits(1240, 760, 2200, 1300);
+    titleLabel.setText("AFROVOCAL PRESETS", juce::dontSendNotification); titleLabel.setFont(juce::Font(22.0f, juce::Font::bold)); titleLabel.setColour(juce::Label::textColourId, white); addAndMakeVisible(titleLabel);
     for (int i = 0; i < factoryPresets.size(); ++i) presetBox.addItem(factoryPresets[i], i + 1);
     presetBox.setSelectedId(1); presetBox.onChange = [this] { processor.applyFactoryPreset(presetBox.getText()); }; addAndMakeVisible(presetBox);
     savePresetButton.onClick = [this] { aiStatus.setText("Preset state is stored with the DAW project.", juce::dontSendNotification); }; addAndMakeVisible(savePresetButton);
@@ -49,7 +49,7 @@ void AfroVocalPresetsAudioProcessorEditor::timerCallback()
 void AfroVocalPresetsAudioProcessorEditor::drawModule(juce::Graphics& g, juce::Rectangle<int> area, const juce::String& name, juce::Colour accentColour, bool enabled)
 {
     g.setColour(metal); g.fillRoundedRectangle(area.toFloat(), 5.0f); g.setColour(juce::Colour(0x44000000)); g.drawRoundedRectangle(area.toFloat().reduced(0.5f), 5.0f, 1.0f);
-    g.setColour(ink); g.setFont(juce::Font(11.0f, juce::Font::bold)); g.drawText(name.toUpperCase(), area.getX() + 10, area.getY() + 7, area.getWidth() - 36, 16, juce::Justification::left);
+    g.setColour(ink); g.setFont(juce::Font(13.0f, juce::Font::bold)); g.drawText(name.toUpperCase(), area.getX() + 13, area.getY() + 8, area.getWidth() - 42, 20, juce::Justification::left);
     g.setColour(enabled ? accentColour : mutedInk); g.fillEllipse(static_cast<float>(area.getRight() - 21), static_cast<float>(area.getY() + 10), 7.0f, 7.0f);
     g.setColour(juce::Colour(0x22000000)); g.drawLine(static_cast<float>(area.getX() + 8), static_cast<float>(area.getY() + 28), static_cast<float>(area.getRight() - 8), static_cast<float>(area.getY() + 28), 1.0f);
 }
@@ -63,8 +63,8 @@ void AfroVocalPresetsAudioProcessorEditor::drawMeter(juce::Graphics& g, juce::Re
         const float y = area.getBottom() - gap - (i + 1) * (h + gap); const bool lit = static_cast<float>(i) / static_cast<float>(bars) < meter;
         g.setColour(lit ? (i > 16 ? red : (i > 12 ? amber : cyan)) : juce::Colour(0xff263337)); g.fillRoundedRectangle(area.getX() + 9.0f, y, area.getWidth() - 18.0f, h, 2.0f);
     }
-    g.setColour(juce::Colour(0xff92a2a4)); g.setFont(juce::Font(9.0f)); for (int i = 0; i < 5; ++i) g.drawText(juce::String(-i * 6) + " dB", static_cast<int>(area.getRight() + 5), static_cast<int>(area.getY() + 12 + i * area.getHeight() / 5), 50, 13, juce::Justification::left);
-    g.setColour(cyan); g.setFont(juce::Font(10.0f, juce::Font::bold)); g.drawText("PEAK", static_cast<int>(area.getX() + 9), static_cast<int>(area.getBottom() - 24), static_cast<int>(area.getWidth() - 18), 14, juce::Justification::centred);
+    g.setColour(juce::Colour(0xffb9c6c8)); g.setFont(juce::Font(11.0f)); for (int i = 0; i < 5; ++i) g.drawText(juce::String(-i * 6) + " dB", static_cast<int>(area.getRight() + 6), static_cast<int>(area.getY() + 14 + i * area.getHeight() / 5), 55, 15, juce::Justification::left);
+    g.setColour(cyan); g.setFont(juce::Font(12.0f, juce::Font::bold)); g.drawText("PEAK", static_cast<int>(area.getX() + 9), static_cast<int>(area.getBottom() - 27), static_cast<int>(area.getWidth() - 18), 16, juce::Justification::centred);
     g.setColour(amber); g.drawText("GR  " + juce::String(gainReduction * 12.0f, 1) + " dB", static_cast<int>(area.getX() + 9), static_cast<int>(area.getBottom() - 42), static_cast<int>(area.getWidth() - 18), 14, juce::Justification::centred);
 }
 
@@ -73,7 +73,7 @@ void AfroVocalPresetsAudioProcessorEditor::paint(juce::Graphics& g)
     g.fillAll(canvas); const auto r = getLocalBounds().reduced(12); g.setColour(chrome); g.fillRoundedRectangle(r.toFloat(), 8.0f);
     g.setColour(juce::Colour(0xff3d4546)); g.drawRoundedRectangle(r.toFloat(), 8.0f, 1.0f);
     g.setColour(juce::Colour(0xff101416)); g.fillRect(r.getX(), r.getY(), r.getWidth(), 49); g.setColour(juce::Colour(0xff363e40)); g.drawHorizontalLine(r.getY() + 49, static_cast<float>(r.getX()), static_cast<float>(r.getRight()));
-    g.setColour(mutedInk); g.setFont(juce::Font(10.0f, juce::Font::bold)); g.drawText("A", 252, 29, 18, 16, juce::Justification::centred); g.drawText("B", 277, 29, 18, 16, juce::Justification::centred); g.drawText("COPY", 305, 29, 40, 16, juce::Justification::centred); g.drawText("PASTE", 350, 29, 44, 16, juce::Justification::centred); g.drawText("INPUT", 410, 29, 48, 16, juce::Justification::centred);
+    g.setColour(mutedInk); g.setFont(juce::Font(12.0f, juce::Font::bold)); g.drawText("A", 285, 29, 24, 18, juce::Justification::centred); g.drawText("B", 317, 29, 24, 18, juce::Justification::centred); g.drawText("COPY", 350, 29, 52, 18, juce::Justification::centred); g.drawText("PASTE", 410, 29, 58, 18, juce::Justification::centred); g.drawText("INPUT", 480, 29, 64, 18, juce::Justification::centred);
 
     const auto body = r.withTop(r.getY() + 58).withBottom(r.getBottom() - 58); const int browserWidth = juce::jmax(190, static_cast<int>(body.getWidth() * 0.205f)); const int meterWidth = juce::jmax(118, static_cast<int>(body.getWidth() * 0.135f));
     const int left = body.getX(), right = body.getRight() - browserWidth, gap = 7; const int laneWidth = (right - left - meterWidth - gap * 5) / 4; int x = left;
@@ -86,17 +86,20 @@ void AfroVocalPresetsAudioProcessorEditor::paint(juce::Graphics& g)
 
     auto labels = [&](juce::Rectangle<int> area, const juce::StringArray& names) { const int cell = area.getWidth() / names.size(); for (int i = 0; i < names.size(); ++i) { g.setColour(ink); g.setFont(juce::Font(9.0f, juce::Font::bold)); g.drawText(names[i], area.getX() + i * cell, area.getY(), cell, 16, juce::Justification::centred); } };
     labels(inputArea.withTop(inputArea.getY() + 42).withHeight(16), { "HPF", "TUNE", "FOCUS" }); labels(dynArea.withTop(dynArea.getY() + 42).withHeight(16), { "THRESH", "RATIO", "ATTACK" }); labels(toneArea.withTop(toneArea.getY() + 42).withHeight(16), { "LOW MID", "PRESENCE", "AIR" }); labels(fxArea.withTop(fxArea.getY() + 42).withHeight(16), { "DE-ESS", "PLATE", "DELAY" });
+    labels(dynArea.withTop(dynArea.getY() + 242).withHeight(16), { "PARALLEL", "RELEASE", "" }); labels(toneArea.withTop(toneArea.getY() + 242).withHeight(16), { "WARMTH", "OUTPUT", "" }); labels(fxArea.withTop(fxArea.getY() + 242).withHeight(16), { "AMBIENT", "TIME", "" });
     g.setColour(metal); g.fillRect(r.getX(), r.getBottom() - 49, r.getWidth(), 49); g.setColour(mutedInk); g.setFont(juce::Font(9.0f)); g.drawText("THD / TONE", r.getX() + 16, r.getBottom() - 31, 100, 15, juce::Justification::left); g.drawText("STEREO MODE", r.getRight() - 265, r.getBottom() - 31, 100, 15, juce::Justification::left); g.drawText("AI AUDIO ASSISTANCE", r.getRight() - 500, r.getBottom() - 31, 140, 15, juce::Justification::left);
 }
 
 void AfroVocalPresetsAudioProcessorEditor::resized()
 {
-    const auto r = getLocalBounds().reduced(12); const auto body = r.withTop(r.getY() + 58).withBottom(r.getBottom() - 58); const int browserWidth = juce::jmax(190, static_cast<int>(body.getWidth() * 0.205f)); const int meterWidth = juce::jmax(118, static_cast<int>(body.getWidth() * 0.135f)); const int left = body.getX(), right = body.getRight() - browserWidth, gap = 7, laneWidth = (right - left - meterWidth - gap * 5) / 4; int x = left;
-    titleLabel.setBounds(r.getX() + 16, r.getY() + 13, 205, 24); presetBox.setBounds(r.getX() + 640, r.getY() + 12, 255, 27); savePresetButton.setBounds(r.getX() + 912, r.getY() + 12, 68, 27); bypassButton.setBounds(r.getRight() - 108, r.getY() + 12, 92, 27); keyBox.setBounds(r.getRight() - browserWidth + 16, body.getY() + 13, browserWidth - 32, 25); scaleBox.setBounds(r.getRight() - browserWidth + 16, body.getY() + 43, browserWidth - 32, 25);
+    const auto r = getLocalBounds().reduced(14); const auto body = r.withTop(r.getY() + 66).withBottom(r.getBottom() - 68); const int browserWidth = juce::jmax(240, static_cast<int>(body.getWidth() * 0.20f)); const int meterWidth = juce::jmax(150, static_cast<int>(body.getWidth() * 0.13f)); const int left = body.getX(), right = body.getRight() - browserWidth, gap = 10, laneWidth = (right - left - meterWidth - gap * 5) / 4; int x = left;
+    titleLabel.setBounds(r.getX() + 20, r.getY() + 14, 270, 30); presetBox.setBounds(r.getX() + 760, r.getY() + 14, 300, 34); savePresetButton.setBounds(r.getX() + 1080, r.getY() + 14, 82, 34); bypassButton.setBounds(r.getRight() - 126, r.getY() + 14, 106, 34);
     auto lane = [&](int width) { auto a = juce::Rectangle<int>(x, body.getY(), width, body.getHeight()); x += width + gap; return a; }; const auto input = lane(laneWidth), dyn = lane(laneWidth), tone = lane(laneWidth), fx = lane(laneWidth); x += meterWidth + gap;
-    const int top = body.getY() + 60, bottom = body.getBottom() - 76; const int rowH = 106;
-    auto three = [&](juce::Slider& a, juce::Slider& b, juce::Slider& c, juce::Rectangle<int> area) { const int w = area.getWidth() / 3; a.setBounds(area.getX() + 5, area.getY(), w - 9, rowH); b.setBounds(area.getX() + w + 1, area.getY(), w - 9, rowH); c.setBounds(area.getX() + 2 * w - 3, area.getY(), w - 8, rowH); };
+    const int top = body.getY() + 65, rowH = 154, rowGap = 32;
+    auto three = [&](juce::Slider& a, juce::Slider& b, juce::Slider& c, juce::Rectangle<int> area) { const int w = area.getWidth() / 3; a.setBounds(area.getX() + 8, area.getY(), w - 13, rowH); b.setBounds(area.getX() + w + 3, area.getY(), w - 13, rowH); c.setBounds(area.getX() + 2 * w - 2, area.getY(), w - 10, rowH); };
     three(hpSlider, tuneSlider, focusSlider, input.withTop(top)); three(compSlider, ratioSlider, attackSlider, dyn.withTop(top)); three(lowMidSlider, presenceSlider, airSlider, tone.withTop(top)); three(deEssSlider, spaceSlider, delaySlider, fx.withTop(top));
-    three(parallelSlider, releaseSlider, warmthSlider, dyn.withTop(top + rowH + 24)); three(ambientSlider, delayTimeSlider, outputSlider, fx.withTop(top + rowH + 24));
-    aiPrompt.setBounds(r.getX() + 16, r.getBottom() - 43, 220, 25); apiKeyEditor.setBounds(r.getX() + 244, r.getBottom() - 43, 220, 25); activateAiButton.setBounds(r.getX() + 472, r.getBottom() - 43, 88, 25); aiStatus.setBounds(r.getX() + 568, r.getBottom() - 43, 330, 25);
+    keyBox.setBounds(input.getX() + 14, top + rowH + 28, input.getWidth() - 28, 36); scaleBox.setBounds(input.getX() + 14, top + rowH + 74, input.getWidth() - 28, 36);
+    auto two = [&](juce::Slider& a, juce::Slider& b, juce::Rectangle<int> area) { const int w = area.getWidth() / 2; a.setBounds(area.getX() + 20, area.getY(), w - 28, rowH); b.setBounds(area.getX() + w + 8, area.getY(), w - 28, rowH); };
+    two(parallelSlider, releaseSlider, dyn.withTop(top + rowH + rowGap)); two(warmthSlider, outputSlider, tone.withTop(top + rowH + rowGap)); two(ambientSlider, delayTimeSlider, fx.withTop(top + rowH + rowGap));
+    aiPrompt.setBounds(r.getX() + 20, r.getBottom() - 49, 280, 32); apiKeyEditor.setBounds(r.getX() + 310, r.getBottom() - 49, 280, 32); activateAiButton.setBounds(r.getX() + 600, r.getBottom() - 49, 105, 32); aiStatus.setBounds(r.getX() + 720, r.getBottom() - 49, 430, 32);
 }
