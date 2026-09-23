@@ -95,6 +95,7 @@ struct AfroVocalPresetsAudioProcessor::ChannelDSP
     bool voiced = false;
     float deEssEnvelope = 0.0f;
     float delayFeedback = 0.18f;
+    float activeRetuneMs = -1.0f;
 
     void prepare(double sr, int block, int channels)
     {
@@ -115,7 +116,7 @@ struct AfroVocalPresetsAudioProcessor::ChannelDSP
         for (auto& f : highPass) f.reset(); for (auto& f : lowMid) f.reset(); for (auto& f : presence) f.reset(); for (auto& f : air) f.reset();
         compressor.reset(); parallelCompressor.reset(); reverb.reset(); delay.reset();
         parallelBuffer.clear(); reverbBuffer.clear(); monoRing.fill(0.0f); analysis.fill(0.0f); shiftRingL.fill(0.0f); shiftRingR.fill(0.0f);
-        ringWrite = 0; analysisCounter = 0; previousPitch = 0.0f; targetMidi = 69.0f; pitchConfidence = 0.0f; voiced = false; deEssEnvelope = 0.0f;
+        ringWrite = 0; analysisCounter = 0; previousPitch = 0.0f; targetMidi = 69.0f; pitchConfidence = 0.0f; voiced = false; deEssEnvelope = 0.0f; activeRetuneMs = -1.0f;
         pitchRatio.setCurrentAndTargetValue(1.0f); correctionAuthority.setCurrentAndTargetValue(0.0f); saturation.setCurrentAndTargetValue(1.0f);
     }
 
@@ -184,7 +185,7 @@ struct AfroVocalPresetsAudioProcessor::ChannelDSP
         return ring[static_cast<size_t>(i0)] * (1.0f - frac) + ring[static_cast<size_t>(i1)] * frac;
     }
 
-    void process(juce::AudioBuffer<float>& buffer, float tune, float retuneMs, int key, int scale, float hp, float lowMidDb,
+    void process(juce::AudioBuffer<float>& buffer, float tune, float focus, float retuneMs, int key, int scale, float hp, float lowMidDb,
                  float presenceDb, float airDb, float compThreshold, float compRatio, float compAttack, float compRelease,
                  float deEss, float warmth, float parallel, float plate, float ambient, float delayMix, float delayMs)
     {
@@ -192,6 +193,15 @@ struct AfroVocalPresetsAudioProcessor::ChannelDSP
         const int channels = juce::jmin(preparedChannels, buffer.getNumChannels());
         const int samples = juce::jmin(preparedMaximum, buffer.getNumSamples());
         if (samples <= 0 || channels <= 0 || samples != buffer.getNumSamples()) { buffer.clear(); return; }
+        if (activeRetuneMs < 0.0f || std::abs(activeRetuneMs - retuneMs) > 0.5f)
+        {
+            const float currentRatio = pitchRatio.getCurrentValue();
+            const float targetRatio = pitchRatio.getTargetValue();
+            pitchRatio.reset(sampleRate, juce::jmax(0.002, static_cast<double>(retuneMs) / 1000.0));
+            pitchRatio.setCurrentAndTargetValue(currentRatio);
+            pitchRatio.setTargetValue(targetRatio);
+            activeRetuneMs = retuneMs;
+        }
         updateFilters(hp, lowMidDb, presenceDb, airDb);
         compressor.setThreshold(compThreshold); compressor.setRatio(compRatio); compressor.setAttack(compAttack); compressor.setRelease(compRelease);
         parallelCompressor.setThreshold(-24.0f); parallelCompressor.setRatio(8.0f); parallelCompressor.setAttack(2.0f); parallelCompressor.setRelease(80.0f);
@@ -221,7 +231,8 @@ struct AfroVocalPresetsAudioProcessor::ChannelDSP
                     const float cents = 100.0f * (targetMidi - midi);
                     const float correction = cents * tune;
                     const float ratio = juce::jlimit(0.5f, 2.0f, std::pow(2.0f, correction / 1200.0f));
-                    const float authority = juce::jlimit(0.0f, 1.0f, tune * estimate.confidence);
+                    const float focusConfidence = juce::jlimit(0.0f, 1.0f, estimate.confidence + focus * 0.18f);
+                    const float authority = juce::jlimit(0.0f, 1.0f, tune * focusConfidence);
                     pitchRatio.setTargetValue(ratio); correctionAuthority.setTargetValue(authority);
                 }
                 else { pitchRatio.setTargetValue(1.0f); correctionAuthority.setTargetValue(0.0f); }
@@ -237,6 +248,16 @@ struct AfroVocalPresetsAudioProcessor::ChannelDSP
             buffer.setSample(0, s, inL * (1.0f - authority) + shiftedL * authority);
             if (channels > 1) buffer.setSample(1, s, inR * (1.0f - authority) + shiftedR * authority);
         }
+
+        for (int ch = 0; ch < channels; ++ch)
+            for (int s = 0; s < samples; ++s)
+            {
+                auto x = buffer.getSample(ch, s);
+                x = highPass[ch].process(x);
+                x = lowMid[ch].process(x);
+                x = presence[ch].process(x);
+                buffer.setSample(ch, s, air[ch].process(x));
+            }
 
         auto context = juce::dsp::ProcessContextReplacing<float>(block);
         compressor.process(context);
@@ -339,7 +360,7 @@ AfroVocalPresetsAudioProcessor::~AfroVocalPresetsAudioProcessor() = default;
 void AfroVocalPresetsAudioProcessor::cacheParameterPointers()
 {
     auto get = [this](const char* id) { return parameters.getRawParameterValue(id); };
-    bypassParam = get("bypass"); tuneAmountParam = get("tuneAmount"); retuneSpeedParam = get("retuneSpeed"); keyParam = get("key"); scaleParam = get("scale");
+    bypassParam = get("bypass"); tuneAmountParam = get("tuneAmount"); vocalFocusParam = get("vocalFocus"); retuneSpeedParam = get("retuneSpeed"); keyParam = get("key"); scaleParam = get("scale");
     highPassParam = get("highPass"); lowMidParam = get("lowMidCut"); presenceParam = get("presence"); airParam = get("air"); compThresholdParam = get("compThreshold");
     compRatioParam = get("compRatio"); compAttackParam = get("compAttack"); compReleaseParam = get("compRelease"); deEssParam = get("deEss"); warmthParam = get("warmth");
     parallelParam = get("parallelComp"); plateParam = get("plate"); ambientParam = get("ambient"); delayMixParam = get("delayMix"); delayMsParam = get("delayMs"); outputGainParam = get("outputGain");
@@ -350,6 +371,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AfroVocalPresetsAudioProcess
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> p;
     p.push_back(std::make_unique<juce::AudioParameterBool>("bypass", "Bypass", false));
     p.push_back(std::make_unique<juce::AudioParameterFloat>("tuneAmount", "Tune Amount", range(0, 1), 0.35f, percentAttributes()));
+    p.push_back(std::make_unique<juce::AudioParameterFloat>("vocalFocus", "AfroFocus", range(0, 1), 0.55f, percentAttributes()));
     p.push_back(std::make_unique<juce::AudioParameterFloat>("retuneSpeed", "Retune Speed", range(0, 100), 35.0f, "ms"));
     p.push_back(std::make_unique<juce::AudioParameterChoice>("key", "Key", juce::StringArray { "Chromatic", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }, 0));
     p.push_back(std::make_unique<juce::AudioParameterChoice>("scale", "Scale", juce::StringArray { "Major", "Minor", "Dorian", "Pentatonic" }, 1));
@@ -392,7 +414,7 @@ void AfroVocalPresetsAudioProcessor::processBlock(juce::AudioBuffer<float>& buff
     juce::ignoreUnused(midi); juce::ScopedNoDenormals noDenormals;
     if (buffer.getNumSamples() > channelDSP->preparedMaximum || buffer.getNumChannels() > channelDSP->preparedChannels) { buffer.clear(); return; }
     if (bypassParam->load(std::memory_order_relaxed) > 0.5f) { processBlockBypassed(buffer, midi); return; }
-    channelDSP->process(buffer, tuneAmountParam->load(std::memory_order_relaxed), retuneSpeedParam->load(std::memory_order_relaxed),
+    channelDSP->process(buffer, tuneAmountParam->load(std::memory_order_relaxed), vocalFocusParam->load(std::memory_order_relaxed), retuneSpeedParam->load(std::memory_order_relaxed),
                         static_cast<int>(keyParam->load(std::memory_order_relaxed)), static_cast<int>(scaleParam->load(std::memory_order_relaxed)),
                         highPassParam->load(std::memory_order_relaxed), lowMidParam->load(std::memory_order_relaxed), presenceParam->load(std::memory_order_relaxed),
                         airParam->load(std::memory_order_relaxed) * 8.0f, compThresholdParam->load(std::memory_order_relaxed), compRatioParam->load(std::memory_order_relaxed),

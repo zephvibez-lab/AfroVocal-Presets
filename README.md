@@ -8,6 +8,10 @@ The processor now includes a causal, monophonic pitch-correction path: a 2,048-s
 
 The audio callback uses cached APVTS parameter pointers, preallocated scratch/ring buffers, allocation-free biquad coefficient updates, variable-block/channel guards, explicit reset behavior, a canonical host bypass parameter, and zero reported latency for the current causal implementation. The optional AI worker never calls host parameter APIs directly; it stages a validated JSON result for the editor/message thread to apply.
 
+## Performance upgrade
+
+The current development build adds **AfroFocus**, an adaptive vocal-lock macro that increases pitch correction authority only when the tracker has enough confidence. It is designed to preserve expressive transitions while tightening unstable notes. Retune Speed now controls the correction smoothing time, and the channel-strip EQ/air filters are actively applied in the audio path. The engine remains allocation-free in the callback, uses cached parameters and preallocated buffers, and reports zero host latency for the current causal design.
+
 ## Reference-driven editor
 
 The editor has been redesigned around the uploaded reference image’s information architecture without copying proprietary artwork or branding. It uses a dense light-metal channel-strip body, colored functional controls, active-state LEDs, a high-contrast central peak/gain-reduction meter, a dark preset browser, compact utility header, and an AI assistance footer. The logical target is approximately 1,320 × 760 with a resizable minimum of 1,080 × 620, following the research recommendation for larger knobs and readable labels rather than reproducing the photo’s cramped geometry.

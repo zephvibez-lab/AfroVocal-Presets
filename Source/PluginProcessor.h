@@ -53,6 +53,7 @@ private:
 
     std::atomic<float>* bypassParam = nullptr;
     std::atomic<float>* tuneAmountParam = nullptr;
+    std::atomic<float>* vocalFocusParam = nullptr;
     std::atomic<float>* retuneSpeedParam = nullptr;
     std::atomic<float>* keyParam = nullptr;
     std::atomic<float>* scaleParam = nullptr;

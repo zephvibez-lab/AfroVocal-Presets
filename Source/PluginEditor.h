@@ -21,10 +21,10 @@ private:
     juce::TextButton savePresetButton { "SAVE" }, bypassButton { "BYPASS" }, activateAiButton { "GENERATE" };
     juce::TextEditor aiPrompt, apiKeyEditor;
     juce::Label aiStatus, titleLabel;
-    juce::Slider tuneSlider, airSlider, spaceSlider, warmthSlider, outputSlider;
+    juce::Slider tuneSlider, focusSlider, airSlider, spaceSlider, warmthSlider, outputSlider;
     juce::Slider hpSlider, lowMidSlider, presenceSlider, compSlider, deEssSlider, delaySlider;
     juce::Slider ratioSlider, attackSlider, releaseSlider, parallelSlider, ambientSlider, delayTimeSlider;
-    std::unique_ptr<SliderAttachment> tuneA, airA, spaceA, warmthA, outputA, hpA, lowMidA, presenceA, compA, deEssA, delayA;
+    std::unique_ptr<SliderAttachment> tuneA, focusA, airA, spaceA, warmthA, outputA, hpA, lowMidA, presenceA, compA, deEssA, delayA;
     std::unique_ptr<SliderAttachment> ratioA, attackA, releaseA, parallelA, ambientA, delayTimeA;
     std::unique_ptr<ButtonAttachment> bypassA;
     std::unique_ptr<ComboAttachment> keyA, scaleA;
