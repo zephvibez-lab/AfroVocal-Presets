@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(AfroVocalPresets VERSION 0.1.0 LANGUAGES CXX)
+project(AfroVocalPresets VERSION 0.6.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -28,7 +28,7 @@ juce_add_plugin(AfroVocalPresets
     PLUGIN_CODE Avp1
     FORMATS VST3 Standalone
     PRODUCT_NAME "AfroVocal Presets"
-    VERSION "0.1.0"
+    VERSION "0.6.0"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
