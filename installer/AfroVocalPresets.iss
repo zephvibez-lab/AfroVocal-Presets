@@ -22,7 +22,7 @@ DisableDirPage=yes
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-OutputDir=release
+OutputDir=..\release
 OutputBaseFilename=AfroVocal-Presets-Setup-x64
 Compression=lzma2/max
 SolidCompression=yes
@@ -40,7 +40,7 @@ VersionInfoProductVersion={#MyAppVersion}
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "release\AfroVocal Presets.vst3\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "..\release\AfroVocal Presets.vst3\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
