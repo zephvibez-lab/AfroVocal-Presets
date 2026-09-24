@@ -12,13 +12,22 @@ public:
     void resized() override;
 
 private:
+    class AfroLookAndFeel final : public juce::LookAndFeel_V4
+    {
+    public:
+        void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height, float sliderPos,
+                              float rotaryStartAngle, float rotaryEndAngle, juce::Slider&) override;
+        void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&, bool, bool) override;
+        void drawButtonText(juce::Graphics&, juce::TextButton&, bool, bool) override;
+    } lookAndFeel;
+
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
     using ComboAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
 
     AfroVocalPresetsAudioProcessor& processor;
     juce::ComboBox presetBox, keyBox, scaleBox;
-    juce::TextButton savePresetButton { "SAVE" }, bypassButton { "BYPASS" }, activateAiButton { "GENERATE" };
+    juce::TextButton savePresetButton { "Save" }, bypassButton { "Bypass" }, activateAiButton { "Generate AI" };
     juce::TextEditor aiPrompt, apiKeyEditor;
     juce::Label aiStatus, titleLabel;
     juce::Slider tuneSlider, focusSlider, airSlider, spaceSlider, warmthSlider, outputSlider;
@@ -33,7 +42,9 @@ private:
 
     void configureSlider(juce::Slider&, const juce::String& suffix = {});
     void timerCallback() override;
-    void drawModule(juce::Graphics&, juce::Rectangle<int>, const juce::String&, juce::Colour, bool enabled = true);
+    void drawPanel(juce::Graphics&, juce::Rectangle<float>, const juce::String&, juce::Colour);
+    void drawKnobLabel(juce::Graphics&, const juce::String&, juce::Rectangle<float>);
     void drawMeter(juce::Graphics&, juce::Rectangle<float>);
+    void drawGraph(juce::Graphics&, juce::Rectangle<float>, bool compressor);
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AfroVocalPresetsAudioProcessorEditor)
 };
